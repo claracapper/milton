@@ -2,6 +2,8 @@ from query_function import query_database
 import config
 from main import get_last_unseen_msg, gpt_model, send_email
 import warnings
+import time
+
 warnings.filterwarnings('ignore')
 
 df = query_database(config.host,
@@ -43,9 +45,12 @@ def call_milton_for_each_row(df):
                 
         except Exception as e:
             print("Ocurrió un error en el proceso: ", e)
-        
-call_milton_for_each_row(df)
-        
+
+while True:
+    call_milton_for_each_row(df)
+    time.sleep(30) 
+
+
         
         
 
