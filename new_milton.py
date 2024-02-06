@@ -12,7 +12,7 @@ def call_milton_for_each_row(df):
         smtp_host = row['smtp_host']
         imap_host = row['imap_host']
         email = row['email']
-        email_password = row['email_password']
+        email_password = "vjuuntxpciavvfsm"
         
         try:
             re, subject, msg = get_last_unseen_msg(imap_host, email, email_password)
