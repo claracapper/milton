@@ -13,7 +13,6 @@ def call_milton_for_each_row(df):
         imap_host = row['imap_host']
         email = row['email']
         email_password = "vjuuntxpciavvfsm"
-        
         try:
             re, subject, msg = get_last_unseen_msg(imap_host, email, email_password)
             if re:
@@ -27,7 +26,7 @@ def call_milton_for_each_row(df):
         except Exception as e:
             print("Ocurrió un error en el proceso: ", e)
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     df = query_database(config.host,
                         config.port,
                         config.user,
@@ -35,4 +34,5 @@ if __name__ == "__main__":
                         config.database,
                         config.schema,
                         config.query)
+    
     call_milton_for_each_row(df)

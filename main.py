@@ -6,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.header import decode_header
 import re
 from openai import OpenAI
+import datetime
 # =============================================================================
 # OBTENCIÓN ÚLTIMO EMAIL SIN ABRIR
 # =============================================================================
@@ -62,10 +63,17 @@ def gpt_model(contexto,
             mensaje,
             model,
             temperature=0):
+    
+    now = datetime.datetime.now()
+    fecha = now.strftime("%d de %B de %Y")
+    hora = now.strftime("%H:%M")
 
+    fecha_hora = f"Hoy es {fecha}, son las {hora}h"
+    datetime_info = f"Esta es la hora que tienes en cuenta al saludar, buenos días de 7AM a 12PM, buenas tardes de 12PM a 20PM y buenas noches de 21PM a 7AM: {fecha_hora}"
+    
     client = OpenAI(api_key="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")  
 
-    context = contexto  + mensaje  
+    context =  contexto + datetime_info  + mensaje
     response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": context}],
