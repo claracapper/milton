@@ -10,9 +10,8 @@ import datetime
 # =============================================================================
 # OBTENCIÓN ÚLTIMO EMAIL SIN ABRIR
 # =============================================================================
-
 def get_last_unseen_msg(imap_host, username, password):
-    def decodificar_mensaje(msg):
+    def decode_msg(msg):
         if msg.is_multipart():
             for part in msg.walk():
                 ctype = part.get_content_type()
@@ -37,28 +36,31 @@ def get_last_unseen_msg(imap_host, username, password):
                     msg = email.message_from_bytes(data[0][1])
                     remitente_completo = msg['From']
                     asunto = msg['Subject']
-                    mensaje = decodificar_mensaje(msg)
+                    mensaje = decode_msg(msg)
+                    msg_id = msg['Message-ID']  # Obtener el ID del mensaje
 
                     # Extraer la dirección de correo electrónico del remitente
                     remitente = re.search(r'<(.+?)>', remitente_completo)
                     remitente_email = remitente.group(1) if remitente else remitente_completo
 
                     # Decodificar el asunto si es necesario
-                    asunto_decodificado, encoding = decode_header(asunto)[0]
-                    if isinstance(asunto_decodificado, bytes):
-                        asunto = asunto_decodificado.decode(encoding or 'utf-8')
+                    if asunto is not None:
+                        asunto_decodificado, encoding = decode_header(asunto)[0]
+                        if isinstance(asunto_decodificado, bytes):
+                            asunto = asunto_decodificado.decode(encoding or 'utf-8')
+                    else:
+                        asunto = " "
 
-                    return remitente_email, asunto, mensaje
-            return None, None, None
+                    return remitente_email, asunto, mensaje, msg_id  # Devolver también el ID del mensaje
+            return None, None, None, None
     except Exception as e:
         print("Ocurrió un error:", e)
-        return None, None, None
-
+        return None, None, None, None
+    
 # =============================================================================
 # 
 # =============================================================================
-
-def gpt_request(contexto,
+def gpt_model(contexto,
             mensaje,
             model,
             temperature=0):
@@ -67,14 +69,12 @@ def gpt_request(contexto,
     fecha = now.strftime("%d de %B de %Y")
     hora = now.strftime("%H:%M")
 
-
     fecha_hora = f"Hoy es {fecha}, son las {hora}h"
     datetime_info = f"Esta es la hora que tienes en cuenta al saludar, buenos días de 7AM a 12PM, buenas tardes de 12PM a 20PM y buenas noches de 21PM a 7AM: {fecha_hora}"
+    
     client = OpenAI(api_key="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")  
+
     context =  contexto + datetime_info  + mensaje
-    print("este es el contexto:")
-    print(context)
-    print("--------------------------------------")
     response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": context}],
@@ -83,16 +83,18 @@ def gpt_request(contexto,
         )
     
     respuesta = response.choices[0].message.content
+
     return respuesta
 # =============================================================================
 # 
 # =============================================================================
-def send_email(smtp_host, username, password, remitente, asunto, respuesta):
+def send_email(smtp_host, username, password, remitente, asunto, respuesta, msg_id):
     # Crear el mensaje
     msg = MIMEMultipart()
     msg['From'] = username
     msg['To'] = remitente
     msg['Subject'] = 'Re: ' + asunto
+    msg['In-Reply-To'] = msg_id  # Añadir el ID del mensaje al que se está respondiendo
     msg.attach(MIMEText(respuesta, 'plain'))
 
     try:
@@ -110,3 +112,10 @@ def send_email(smtp_host, username, password, remitente, asunto, respuesta):
 # 
 # =============================================================================
 
+# =============================================================================
+# 
+# =============================================================================
+
+# =============================================================================
+# 
+# =============================================================================
