@@ -71,10 +71,11 @@ def gpt_model(contexto,
 
     fecha_hora = f"Hoy es {fecha}, son las {hora}h"
     datetime_info = f"Esta es la hora que tienes en cuenta al saludar, buenos días de 7AM a 12PM, buenas tardes de 12PM a 20PM y buenas noches de 21PM a 7AM: {fecha_hora}"
+    idioma = "recuerda responder en inglés si el mensaje del cliente a continuación es en inglés:"
     
     client = OpenAI(api_key="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")  
 
-    context =  contexto + datetime_info  + mensaje
+    context =  contexto + datetime_info  + idioma + mensaje
     response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": context}],
@@ -112,10 +113,3 @@ def send_email(smtp_host, username, password, remitente, asunto, respuesta, msg_
 # 
 # =============================================================================
 
-# =============================================================================
-# 
-# =============================================================================
-
-# =============================================================================
-# 
-# =============================================================================

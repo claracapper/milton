@@ -14,7 +14,7 @@ def milton_execution(df):
         email = row['email']
         email_password = "vjuuntxpciavvfsm"
         try:
-            re, subject, msg, msg_id = f.get_last_unseen_msg(imap_host, email, email_password)  # Corrección aquí
+            re, subject, msg, msg_id = f.get_last_unseen_msg(imap_host, email, email_password)
             if re:
                 milton_answer = f.gpt_model(context, msg, model)
                 email_sent = f.send_email(smtp_host, email, email_password, re, subject, milton_answer, msg_id)
