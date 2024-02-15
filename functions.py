@@ -9,6 +9,7 @@ from openai import OpenAI
 # =============================================================================
 # OBTENCIÓN ÚLTIMO EMAIL SIN ABRIR
 # =============================================================================
+
 def get_last_unseen_msg(imap_host, username, password):
     def decodificar_mensaje(msg):
         if msg.is_multipart():
@@ -42,29 +43,26 @@ def get_last_unseen_msg(imap_host, username, password):
                     remitente_email = remitente.group(1) if remitente else remitente_completo
 
                     # Decodificar el asunto si es necesario
-                    if asunto is not None:
-                        asunto_decodificado, encoding = decode_header(asunto)[0]
-                        if isinstance(asunto_decodificado, bytes):
-                            asunto = asunto_decodificado.decode(encoding or 'utf-8')
-                    else:
-                        asunto = " "
+                    asunto_decodificado, encoding = decode_header(asunto)[0]
+                    if isinstance(asunto_decodificado, bytes):
+                        asunto = asunto_decodificado.decode(encoding or 'utf-8')
 
                     return remitente_email, asunto, mensaje
             return None, None, None
     except Exception as e:
         print("Ocurrió un error:", e)
         return None, None, None
-    
+
 # =============================================================================
 # 
 # =============================================================================
-def gpt_model(contexto,
+
+def gpt_request(contexto,
             mensaje,
             model,
             temperature=0):
 
     client = OpenAI(api_key="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")  
-
     context = contexto  + mensaje  
     response = client.chat.completions.create(
             model=model,
@@ -74,7 +72,6 @@ def gpt_model(contexto,
         )
     
     respuesta = response.choices[0].message.content
-
     return respuesta
 # =============================================================================
 # 
@@ -102,10 +99,3 @@ def send_email(smtp_host, username, password, remitente, asunto, respuesta):
 # 
 # =============================================================================
 
-# =============================================================================
-# 
-# =============================================================================
-
-# =============================================================================
-# 
-# =============================================================================
