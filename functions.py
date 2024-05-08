@@ -51,11 +51,28 @@ def get_last_unseen_msg(imap_host, username, password):
                     else:
                         asunto = " "
 
-                    return remitente_email, asunto, mensaje, msg_id  # Devolver también el ID del mensaje
-            return None, None, None, None
+                    return {
+                        'email_from': remitente_email,
+                        'email_subject': asunto,
+                        'email_body': mensaje,
+                        'msg_id': msg_id
+                    }
+
+        return {
+            'email_from': None,
+            'email_subject': None,
+            'email_body': None,
+            'msg_id': None
+        }
     except Exception as e:
         print("Ocurrió un error:", e)
-        return None, None, None, None
+        return {
+            'email_from': None,
+            'email_subject': None,
+            'email_body': None,
+            'msg_id': None
+        }
+
     
 # =============================================================================
 # 
