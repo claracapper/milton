@@ -113,3 +113,58 @@ def send_email(smtp_host, username, password, remitente, asunto, respuesta, msg_
 # 
 # =============================================================================
 
+def get_all_emails(imap_host, username, password):
+    def decode_msg(msg):
+        if msg.is_multipart():
+            for part in msg.walk():
+                ctype = part.get_content_type()
+                cdispo = str(part.get('Content-Disposition'))
+    
+                if ctype == 'text/plain' and 'attachment' not in cdispo:
+                    try:
+                        return part.get_payload(decode=True).decode('utf-8')
+                    except UnicodeDecodeError:
+                        return part.get_payload(decode=True).decode('utf-8', 'replace')
+        else:
+            try:
+                return msg.get_payload(decode=True).decode('utf-8')
+            except UnicodeDecodeError:
+                return msg.get_payload(decode=True).decode('utf-8', 'replace')
+    try:
+        mail = imaplib.IMAP4_SSL(imap_host)
+        mail.login(username, password)
+        mail.select('inbox')
+
+        status, messages = mail.search(None, 'ALL')  # Cambiado de 'UNSEEN' a 'ALL'
+        if status == "OK":
+            all_emails = []
+            for num in messages[0].split():  # Iterar sobre todos los correos
+                status, data = mail.fetch(num, '(RFC822)')
+                if status == 'OK':
+                    msg = email.message_from_bytes(data[0][1])
+                    remitente_completo = msg['From']
+                    asunto = msg['Subject']
+                    mensaje = decode_msg(msg)
+                    msg_id = msg['Message-ID']
+
+                    remitente = re.search(r'<(.+?)>', remitente_completo)
+                    remitente_email = remitente.group(1) if remitente else remitente_completo
+
+                    if asunto is not None:
+                        asunto_decodificado, encoding = decode_header(asunto)[0]
+                        if isinstance(asunto_decodificado, bytes):
+                            asunto = asunto_decodificado.decode(encoding or 'utf-8')
+                    else:
+                        asunto = " "
+
+                    # Añadir el correo electrónico a la lista
+                    all_emails.append({
+                        'email_from': remitente_email,
+                        'email_subject': asunto,
+                        'email_body': mensaje,
+                        'email_id': msg_id
+                    })
+            return all_emails
+    except Exception as e:
+        print("Ocurrió un error:", e)
+        return []

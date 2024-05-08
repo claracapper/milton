@@ -37,18 +37,18 @@ query = """SELECT
   subscriptions.id AS subscription_id,
   subscriptions.start_date,
   subscriptions.end_date,
-  products.agent_name,
-  products.category,
-  product_attributes.context,
-  product_attributes.model,
+  agents.agent_name,
+  agents.category,
+  agent_attributes.context,
+  agent_attributes.model,
   hotels.smtp_host,
   hotels.imap_host,
   hotels.email,
   hotels.email_password
 FROM
   subscriptions
-INNER JOIN products ON subscriptions.agent_id = products.id
-INNER JOIN product_attributes ON products.id = product_attributes.agent_id
+INNER JOIN agents ON subscriptions.agent_id = agents.id
+INNER JOIN agent_attributes ON agents.id = agent_attributes.agent_id
 INNER JOIN hotels ON subscriptions.hotels_ids = hotels.id
 WHERE
   subscriptions.is_active = TRUE

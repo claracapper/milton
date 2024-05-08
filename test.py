@@ -1,30 +1,23 @@
+from functions import get_all_emails
 from query_function import query_database
 import config
-import functions as f
 import warnings
+import pandas as pd
 
 warnings.filterwarnings('ignore')
 
-def milton_execution(df):
+def retrieve_all_emails(df):
+    all_emails = []
     for _, row in df.iterrows():
-        context = row['context']
-        model = row['model']
-        smtp_host = row['smtp_host']
         imap_host = row['imap_host']
         email = row['email']
         email_password = row['email_password']
         try:
-            re, subject, msg, msg_id = f.get_last_unseen_msg(imap_host, email, email_password)
-            if re:
-                milton_answer = f.gpt_model(context, msg, model)
-                email_sent = f.send_email(smtp_host, email, email_password, re, subject, milton_answer, msg_id)
-                print(email_sent)
-                print(milton_answer)
-            else:
-                print("Sin emails")
-                
+            emails = get_all_emails(imap_host, email, email_password)
+            all_emails.extend(emails)
         except Exception as e:
             print("Ocurrió un error en el proceso: ", e)
+    return all_emails
 
 if __name__ == "__main__": 
     df = query_database(config.host,
@@ -35,4 +28,6 @@ if __name__ == "__main__":
                         config.schema,
                         config.query)
     
-    milton_execution(df)
+    emails = retrieve_all_emails(df)
+    emails_df = pd.DataFrame(emails)
+    print(emails_df.head())  # Imprime las primeras 5 filas del DataFrame
