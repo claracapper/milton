@@ -10,7 +10,8 @@ schema = 'general_1'
 # =============================================================================
 # Obtiene datos de suscripciones activas a procesar.
 # =============================================================================
-query = """SELECT
+query = """
+SELECT
   subscriptions.id AS subscription_id,
   subscriptions.start_date,
   subscriptions.end_date,
@@ -18,6 +19,7 @@ query = """SELECT
   agents.category,
   agent_attributes.context,
   agent_attributes.model,
+  hotels.id AS hotel_id,  -- Añadido para recuperar el hotel_id
   hotels.smtp_host,
   hotels.imap_host,
   hotels.email,

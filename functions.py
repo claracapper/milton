@@ -7,10 +7,16 @@ from email.header import decode_header
 import re
 from openai import OpenAI
 import datetime
+import config
+import psycopg2
+
 # =============================================================================
 # OBTENCIÓN ÚLTIMO EMAIL SIN ABRIR
 # =============================================================================
 def get_last_unseen_msg(imap_host, username, password):
+    """Se encarga de conectarse a un servidor IMAP, buscar el último correo electrónico no leído, 
+    extraer información relevante de ese correo electrónico (como el remitente, asunto, cuerpo del mensaje, etc.) 
+    y devolver un diccionario con esa información."""
     def decode_msg(msg):
         if msg.is_multipart():
             for part in msg.walk():
@@ -73,7 +79,31 @@ def get_last_unseen_msg(imap_host, username, password):
             'msg_id': None
         }
 
-    
+# =============================================================================
+# 
+# =============================================================================
+def process_email(df):
+    all_emails = []
+    for _, row in df.iterrows():
+        imap_host = row['imap_host']
+        email = row['email']
+        email_password = row['email_password']
+        hotel_id = row['hotel_id']
+        try:
+            email = get_last_unseen_msg(imap_host, email, email_password)
+            if email['email_from'] is not None:
+                all_emails.append(email)
+                save_email_to_database(config.host,
+                                       config.port,
+                                       config.user,
+                                       config.password,
+                                       config.database,
+                                       config.schema,
+                                       email,
+                                       hotel_id)
+        except Exception as e:
+            print("Ocurrió un error en el proceso: ", e)
+    return all_emails
 # =============================================================================
 # 
 # =============================================================================
@@ -88,7 +118,7 @@ def gpt_model(contexto,
 
     fecha_hora = f"Hoy es {fecha}, son las {hora}h"
     datetime_info = f"Esta es la hora que tienes en cuenta al saludar, buenos días de 7AM a 12PM, buenas tardes de 12PM a 20PM y buenas noches de 21PM a 7AM: {fecha_hora}"
-    idioma = "recuerda responder en inglés si el mensaje del cliente a continuación es en inglés:"
+    idioma = "recuerda responder en el mismo idioma que el mensaje del cliente, que es el siguiente:"
     
     client = OpenAI(api_key="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")  
 
@@ -185,3 +215,81 @@ def get_all_emails(imap_host, username, password):
     except Exception as e:
         print("Ocurrió un error:", e)
         return []
+
+# =============================================================================
+# 
+# =============================================================================
+def save_email_to_database(host, port, user, password, database, schema, email, hotel_id):
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database
+        )
+        cur = conn.cursor()
+        # Inserta el correo electrónico junto con el hotel_id
+        cur.execute(f"""
+            INSERT INTO {schema}.emails (email_from, subject, email_body, hotel_id)
+            VALUES (%s, %s, %s, %s)
+        """, (email['email_from'], email['email_subject'], email['email_body'], hotel_id))
+        conn.commit()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+# =============================================================================
+# 
+# =============================================================================
+def process_and_respond_emails():
+    conn = None
+    try:
+        # Conexión a la base de datos
+        conn = psycopg2.connect(
+            host=config.host,
+            port=config.port,
+            user=config.user,
+            password=config.password,
+            database=config.database
+        )
+        cur = conn.cursor()
+
+        # Leer emails sin respuesta generada
+        cur.execute("""
+            SELECT id, email_body, hotel_id FROM general_1.emails
+            WHERE generated_response IS NULL
+        """)
+        emails = cur.fetchall()
+
+        for email_id, email_body, hotel_id in emails:
+            # Buscar información del hotel
+            cur.execute("""
+                SELECT context, model FROM general_1.agent_attributes
+                WHERE hotels_id = %s
+            """, (hotel_id,))
+            agent_info = cur.fetchone()
+            if agent_info:
+                context, model = agent_info
+
+                # Generar respuesta con el modelo GPT
+                generated_response = gpt_model(context, email_body, model)
+
+                # Guardar la respuesta generada en la base de datos
+                cur.execute("""
+                    UPDATE general_1.emails
+                    SET generated_response = %s
+                    WHERE id = %s
+                """, (generated_response, email_id))
+                conn.commit()
+
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error al procesar y responder emails:", error)
+    finally:
+        if conn is not None:
+            conn.close()
