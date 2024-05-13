@@ -1,4 +1,3 @@
-
 # Datos de conexión a Postgre
 host = "135.125.107.175"
 port = "5432"
@@ -7,6 +6,14 @@ password = "@Neurona12"
 database = "milton_project"
 schema = 'general_1'
 
+db_config = {
+    "host": "135.125.107.175",
+    "port": "5432",
+    "user": "admin_miguel",
+    "password": "@Neurona12",
+    "database": "milton_project",
+    "schema": "general_1"
+}
 # =============================================================================
 # Obtiene datos de suscripciones activas a procesar.
 # =============================================================================

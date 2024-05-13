@@ -2,18 +2,9 @@ import streamlit as st
 import pandas as pd
 import psycopg2
 import warnings
+from config import db_config
 
 warnings.filterwarnings('ignore')
-
-# Configuración de la base de datos
-db_config = {
-    "host": "135.125.107.175",
-    "port": "5432",
-    "user": "admin_miguel",
-    "password": "@Neurona12",
-    "database": "milton_project",
-    "schema": "general_1"
-}
 
 # Consulta SQL para obtener emails y respuestas generadas
 email_query = """
@@ -41,7 +32,10 @@ def query_database(config, query, hotel_id):
     conn.close()
     return df
 
-st.set_page_config(page_title="Milton", layout="wide", page_icon="🤵🏻‍♂️")
+st.set_page_config(
+    page_title="Milton",
+    page_icon="🤵",
+    layout="wide" )
 
 # CSS
 st.markdown(
@@ -52,7 +46,7 @@ st.markdown(
         overflow-y: auto;
         background-color: #FDFDFD;
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 20px;
     }
     </style>
     """,
@@ -67,7 +61,7 @@ st.markdown(
         overflow-y: auto;
         background-color: #F9FAF9;
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 20px;
     }
     </style>
     """,
@@ -75,7 +69,7 @@ st.markdown(
 )
 
 
-col1, col2 = st.columns([1, 3.5])
+col1, col2 = st.columns([1, 5])
 
 with col1:
     st.image("milton_logo.png", width=120)
