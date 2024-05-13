@@ -41,18 +41,52 @@ def query_database(config, query, hotel_id):
     conn.close()
     return df
 
-# Configuración de Streamlit UI
-st.set_page_config(page_title="Milton", layout="wide")
+st.set_page_config(page_title="Milton", layout="wide", page_icon="🤵🏻‍♂️")
 
-col1, col2 = st.columns([1.3, 2])
+# CSS
+st.markdown(
+    """
+    <style>
+    .email_body {
+        height: 300px;
+        overflow-y: auto;
+        background-color: #FDFDFD;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <style>
+    .generated_response {
+        height: 300px;
+        overflow-y: auto;
+        background-color: #F9FAF9;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+col1, col2 = st.columns([1, 3.5])
 
 with col1:
-    st.image("milton_logo.png", width=220)
+    st.image("milton_logo.png", width=120)
     
 with col2: 
-    st.markdown("<h1 style='text-align: left; color: #172427; font-size: 70px;'>Milton</h1>", unsafe_allow_html=True)
+    st.text("")
+    st.markdown("<h1 style='text-align: left; color: #172427; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
 
-hotel_id = st.number_input("Ingrese el ID del hotel", value=1, step=1)  # Ajuste para entrada manual del ID del hotel
+st.divider()
+
+hotel_id = 1
 
 if hotel_id:
     df = query_database(db_config, email_query, hotel_id)
@@ -62,11 +96,15 @@ if hotel_id:
         for index, row in df.iterrows():
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown("#### Email original")
-                st.text_area(f"Email {index + 1}", value=row["email_body"], height=300)
+                st.markdown("**🦰 Email {}**".format(index + 1))
+                email_body = row["email_body"]
+                st.markdown(f'<div class="email_body">{email_body}</div>', unsafe_allow_html=True)
+
             with col2:
-                st.markdown("#### Respuesta generada")
-                st.text_area(f"Respuesta {index + 1}", value=row["generated_response"], height=300)
+                st.markdown("**🤵🏻‍♂️ Respuesta {}**".format(index + 1))
+                generated_response = row["generated_response"]
+                st.markdown(f'<div class="generated_response">{generated_response}</div>', unsafe_allow_html=True)
+            st.divider()
     else:
         st.warning("No hay correos electrónicos para mostrar para el hotel ID especificado.")
 else:
