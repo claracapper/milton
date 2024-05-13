@@ -10,11 +10,14 @@ warnings.filterwarnings('ignore')
 email_query = """
 SELECT
     email_body,
-    generated_response
+    generated_response,
+    received_date,
+    answered_date
 FROM
     general_1.emails
 WHERE
-    hotel_id = %s;
+    hotel_id = %s
+ORDER BY id DESC; 
 """
 
 def query_database(config, query, hotel_id):
@@ -81,25 +84,24 @@ with col2:
 st.divider()
 
 hotel_id = 1
+df = query_database(db_config, email_query, hotel_id)
 
-if hotel_id:
-    df = query_database(db_config, email_query, hotel_id)
+if not df.empty:
+    total_emails = len(df)
+    for index, row in df.iterrows():
+        email_number = total_emails - index  # Ajustar el número de email
+        col1, col2 = st.columns(2)
+        with col1:
+            received_date = pd.to_datetime(row["received_date"]).strftime('%d-%m-%Y %H:%M')            
+            st.markdown(f"**🦰 Email {email_number} ({received_date})**")
+            email_body = row["email_body"]
+            st.markdown(f'<div class="email_body">{email_body}</div>', unsafe_allow_html=True)
 
-    if not df.empty:
-        # Sección donde se muestran los emails
-        for index, row in df.iterrows():
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown("**🦰 Email {}**".format(index + 1))
-                email_body = row["email_body"]
-                st.markdown(f'<div class="email_body">{email_body}</div>', unsafe_allow_html=True)
-
-            with col2:
-                st.markdown("**🤵🏻‍♂️ Respuesta {}**".format(index + 1))
-                generated_response = row["generated_response"]
-                st.markdown(f'<div class="generated_response">{generated_response}</div>', unsafe_allow_html=True)
-            st.divider()
-    else:
-        st.warning("No hay correos electrónicos para mostrar para el hotel ID especificado.")
+        with col2:
+            answered_date = pd.to_datetime(row["answered_date"]).strftime('%d-%m-%Y %H:%M')      
+            st.markdown(f"**🤵🏻‍♂️ Respuesta {email_number} ({answered_date})**")
+            generated_response = row["generated_response"]
+            st.markdown(f'<div class="generated_response">{generated_response}</div>', unsafe_allow_html=True)
+        st.divider()
 else:
-    st.warning("Por favor, ingrese un ID de hotel para buscar correos electrónicos.")
+    st.warning("No hay correos electrónicos para mostrar para el hotel ID especificado.")

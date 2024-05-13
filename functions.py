@@ -9,14 +9,12 @@ from openai import OpenAI
 import datetime
 import config
 import psycopg2
+import pandas as pd
 
 # =============================================================================
 # OBTENCIÓN ÚLTIMO EMAIL SIN ABRIR
 # =============================================================================
 def get_last_unseen_msg(imap_host, username, password):
-    """Se encarga de conectarse a un servidor IMAP, buscar el último correo electrónico no leído, 
-    extraer información relevante de ese correo electrónico (como el remitente, asunto, cuerpo del mensaje, etc.) 
-    y devolver un diccionario con esa información."""
     def decode_msg(msg):
         if msg.is_multipart():
             for part in msg.walk():
@@ -34,41 +32,43 @@ def get_last_unseen_msg(imap_host, username, password):
         mail.select('inbox')
 
         status, messages = mail.search(None, 'UNSEEN')
-        if status == "OK":
-            if messages[0]:
-                num = messages[0].split()[-1]  # Obtener el último correo no leído
-                status, data = mail.fetch(num, '(RFC822)')
-                if status == 'OK':
-                    msg = email.message_from_bytes(data[0][1])
-                    remitente_completo = msg['From']
-                    asunto = msg['Subject']
-                    mensaje = decode_msg(msg)
-                    msg_id = msg['Message-ID']  # Obtener el ID del mensaje
+        if status == "OK" and messages[0]:
+            num = messages[0].split()[-1]  # Obtener el último correo no leído
+            status, data = mail.fetch(num, '(RFC822)')
+            if status == 'OK':
+                msg = email.message_from_bytes(data[0][1])
+                remitente_completo = msg['From']
+                asunto = msg['Subject']
+                mensaje = decode_msg(msg)
+                msg_id = msg['Message-ID']  # Obtener el ID del mensaje
+                fecha_recibido = msg['Date']  # Obtener la fecha de recepción del mensaje
 
-                    # Extraer la dirección de correo electrónico del remitente
-                    remitente = re.search(r'<(.+?)>', remitente_completo)
-                    remitente_email = remitente.group(1) if remitente else remitente_completo
+                # Extraer la dirección de correo electrónico del remitente
+                remitente = re.search(r'<(.+?)>', remitente_completo)
+                remitente_email = remitente.group(1) if remitente else remitente_completo
 
-                    # Decodificar el asunto si es necesario
-                    if asunto is not None:
-                        asunto_decodificado, encoding = decode_header(asunto)[0]
-                        if isinstance(asunto_decodificado, bytes):
-                            asunto = asunto_decodificado.decode(encoding or 'utf-8')
-                    else:
-                        asunto = " "
+                # Decodificar el asunto si es necesario
+                if asunto is not None:
+                    asunto_decodificado, encoding = decode_header(asunto)[0]
+                    if isinstance(asunto_decodificado, bytes):
+                        asunto = asunto_decodificado.decode(encoding or 'utf-8')
+                else:
+                    asunto = " "
 
-                    return {
-                        'email_from': remitente_email,
-                        'email_subject': asunto,
-                        'email_body': mensaje,
-                        'msg_id': msg_id
-                    }
+                return {
+                    'email_from': remitente_email,
+                    'email_subject': asunto,
+                    'email_body': mensaje,
+                    'msg_id': msg_id,
+                    'received_date': fecha_recibido  # Agregar fecha de recepción al diccionario
+                }
 
         return {
             'email_from': None,
             'email_subject': None,
             'email_body': None,
-            'msg_id': None
+            'msg_id': None,
+            'received_date': None
         }
     except Exception as e:
         print("Ocurrió un error:", e)
@@ -76,7 +76,8 @@ def get_last_unseen_msg(imap_host, username, password):
             'email_from': None,
             'email_subject': None,
             'email_body': None,
-            'msg_id': None
+            'msg_id': None,
+            'received_date': None
         }
 
 # =============================================================================
@@ -230,11 +231,13 @@ def save_email_to_database(host, port, user, password, database, schema, email, 
             database=database
         )
         cur = conn.cursor()
-        # Inserta el correo electrónico junto con el hotel_id
+        received_date = pd.to_datetime(email['received_date'], utc=True).strftime('%Y-%m-%d %H:%M:%S')
+
+        # Modificar la consulta SQL para incluir el campo received_date
         cur.execute(f"""
-            INSERT INTO {schema}.emails (email_from, subject, email_body, hotel_id)
-            VALUES (%s, %s, %s, %s)
-        """, (email['email_from'], email['email_subject'], email['email_body'], hotel_id))
+            INSERT INTO {schema}.emails (email_from, subject, email_body, received_date, hotel_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (email['email_from'], email['email_subject'], email['email_body'], received_date, hotel_id))
         conn.commit()
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -246,7 +249,7 @@ def save_email_to_database(host, port, user, password, database, schema, email, 
 # =============================================================================
 # 
 # =============================================================================
-def process_and_respond_emails():
+def respond_and_save_emails():
     conn = None
     try:
         # Conexión a la base de datos
@@ -279,12 +282,15 @@ def process_and_respond_emails():
                 # Generar respuesta con el modelo GPT
                 generated_response = gpt_model(context, email_body, model)
 
-                # Guardar la respuesta generada en la base de datos
+                # Obtener el timestamp actual
+                current_time = datetime.datetime.now()
+
+                # Guardar la respuesta generada y el timestamp en la base de datos
                 cur.execute("""
                     UPDATE general_1.emails
-                    SET generated_response = %s
+                    SET generated_response = %s, answered_date = %s
                     WHERE id = %s
-                """, (generated_response, email_id))
+                """, (generated_response, current_time, email_id))
                 conn.commit()
 
         cur.close()

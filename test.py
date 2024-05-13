@@ -18,4 +18,4 @@ if __name__ == "__main__":
     emails = f.process_email(df)
     emails_df = pd.DataFrame(emails)
     
-    f.process_and_respond_emails()
+    f.respond_and_save_emails()
