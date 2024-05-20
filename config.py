@@ -26,7 +26,7 @@ SELECT
   agents.category,
   agent_attributes.context,
   agent_attributes.model,
-  hotels.id AS hotel_id,  -- Añadido para recuperar el hotel_id
+  hotels.id AS hotel_id,
   hotels.smtp_host,
   hotels.imap_host,
   hotels.email,
@@ -35,7 +35,7 @@ FROM
   subscriptions
 INNER JOIN agents ON subscriptions.agent_id = agents.id
 INNER JOIN agent_attributes ON agents.id = agent_attributes.agent_id
-INNER JOIN hotels ON subscriptions.hotels_ids = hotels.id
+INNER JOIN hotels ON subscriptions.hotel_id = hotels.id
 WHERE
   subscriptions.is_active = TRUE
   AND subscriptions.end_date > CURRENT_DATE;

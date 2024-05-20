@@ -88,6 +88,7 @@ st.markdown(
 )
 
 st.sidebar.markdown("<h1 style='text-align: left; color: #172427; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
+st.sidebar.text("")
     
 # Página de acceso para el código
 code_input = st.sidebar.text_input("Código de acceso", '')
@@ -103,6 +104,7 @@ if code_input:
 
         if not df.empty:
             total_emails = len(df)
+            st.sidebar.markdown(f"**Número de emails recibidos: {total_emails}**") 
             for index, row in df.iterrows():
                 email_number = total_emails - index
                 col1, col2 = st.columns(2)

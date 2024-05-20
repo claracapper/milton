@@ -10,6 +10,8 @@ import datetime
 import config
 import psycopg2
 import pandas as pd
+import pytz
+from email.utils import parsedate_tz, mktime_tz
 
 # =============================================================================
 # OBTENCIÓN ÚLTIMO EMAIL SIN ABRIR
@@ -43,6 +45,12 @@ def get_last_unseen_msg(imap_host, username, password):
                 msg_id = msg['Message-ID']  # Obtener el ID del mensaje
                 fecha_recibido = msg['Date']  # Obtener la fecha de recepción del mensaje
 
+                # Ajustar la zona horaria
+                tz = pytz.timezone('Europe/Madrid')  # Ajusta a tu zona horaria
+                date_tuple = parsedate_tz(fecha_recibido)
+                if date_tuple:
+                    local_date = datetime.datetime.fromtimestamp(mktime_tz(date_tuple), tz)
+
                 # Extraer la dirección de correo electrónico del remitente
                 remitente = re.search(r'<(.+?)>', remitente_completo)
                 remitente_email = remitente.group(1) if remitente else remitente_completo
@@ -60,7 +68,7 @@ def get_last_unseen_msg(imap_host, username, password):
                     'email_subject': asunto,
                     'email_body': mensaje,
                     'msg_id': msg_id,
-                    'received_date': fecha_recibido  # Agregar fecha de recepción al diccionario
+                    'received_date': local_date.strftime("%Y-%m-%d %H:%M:%S")
                 }
 
         return {
@@ -273,7 +281,7 @@ def respond_and_save_emails():
             # Buscar información del hotel
             cur.execute("""
                 SELECT context, model FROM general_1.agent_attributes
-                WHERE hotels_id = %s
+                WHERE hotel_id = %s
             """, (hotel_id,))
             agent_info = cur.fetchone()
             if agent_info:
