@@ -3,8 +3,18 @@ import pandas as pd
 import psycopg2
 import warnings
 from config import db_config
+import functions as f
 
 warnings.filterwarnings('ignore')
+
+# Mapeo de códigos a hotelID
+code_to_hotel = {
+    '1': '1',
+    '1011': '11',
+    '1012': '12',
+    '2013': '13',
+    '3014': '14'
+}
 
 # Consulta SQL para obtener emails y respuestas generadas
 email_query = """
@@ -34,6 +44,12 @@ def query_database(config, query, hotel_id):
 
     conn.close()
     return df
+
+def format_date(date):
+    if pd.isna(date):
+        return "Fecha no disponible"
+    else:
+        return pd.to_datetime(date).strftime('%d-%m-%Y %H:%M')
 
 st.set_page_config(
     page_title="Milton",
@@ -71,37 +87,38 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
-col1, col2 = st.columns([1, 5])
-
-with col1:
-    st.image("milton_logo.png", width=120)
+st.sidebar.markdown("<h1 style='text-align: left; color: #172427; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
     
-with col2: 
-    st.text("")
-    st.markdown("<h1 style='text-align: left; color: #172427; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
+# Página de acceso para el código
+code_input = st.sidebar.text_input("Código de acceso", '')
 
-st.divider()
-
-hotel_id = 1
-df = query_database(db_config, email_query, hotel_id)
-
-if not df.empty:
-    total_emails = len(df)
-    for index, row in df.iterrows():
-        email_number = total_emails - index  # Ajustar el número de email
-        col1, col2 = st.columns(2)
-        with col1:
-            received_date = pd.to_datetime(row["received_date"]).strftime('%d-%m-%Y %H:%M')            
-            st.markdown(f"**🦰 Email {email_number} ({received_date})**")
-            email_body = row["email_body"]
-            st.markdown(f'<div class="email_body">{email_body}</div>', unsafe_allow_html=True)
-
-        with col2:
-            answered_date = pd.to_datetime(row["answered_date"]).strftime('%d-%m-%Y %H:%M')      
-            st.markdown(f"**🤵🏻‍♂️ Respuesta {email_number} ({answered_date})**")
-            generated_response = row["generated_response"]
-            st.markdown(f'<div class="generated_response">{generated_response}</div>', unsafe_allow_html=True)
+# Verificar el código y mostrar la información correspondiente
+if code_input:
+    if code_input in code_to_hotel:
+        hotel_id = code_to_hotel[code_input]
+        hotel_name = f.get_hotel_name(db_config, hotel_id)
+        st.title(hotel_name)
         st.divider()
-else:
-    st.warning("No hay correos electrónicos para mostrar para el hotel ID especificado.")
+        df = query_database(db_config, email_query, hotel_id)
+
+        if not df.empty:
+            total_emails = len(df)
+            for index, row in df.iterrows():
+                email_number = total_emails - index
+                col1, col2 = st.columns(2)
+                with col1:
+                    received_date = format_date(row["received_date"])
+                    st.markdown(f"**🦰 Email {email_number} ({received_date})**")
+                    email_body = row["email_body"]
+                    st.markdown(f'<div class="email_body">{email_body}</div>', unsafe_allow_html=True)
+        
+                with col2:
+                    answered_date = format_date(row["answered_date"])
+                    st.markdown(f"**🤵🏻‍♂️ Respuesta {email_number} ({answered_date})**")
+                    generated_response = row["generated_response"]
+                    st.markdown(f'<div class="generated_response">{generated_response}</div>', unsafe_allow_html=True)
+                st.divider()
+        else:
+            st.warning("No hay correos electrónicos para el hotel especificado.")
+    else:
+        st.error("Código de acceso inválido. Por favor, intente de nuevo.")

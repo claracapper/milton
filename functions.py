@@ -299,3 +299,42 @@ def respond_and_save_emails():
     finally:
         if conn is not None:
             conn.close()
+            
+# =============================================================================
+# 
+# =============================================================================
+def get_hotel_name(config, hotel_id):
+    """
+    Obtiene el nombre del hotel basado en su ID utilizando la configuración de la base de datos.
+
+    Parámetros:
+    - config: Un diccionario con la configuración de la base de datos.
+    - hotel_id: El ID del hotel.
+
+    Retorna:
+    - El nombre del hotel si se encuentra, o None si no se encuentra.
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host=config["host"],
+            port=config["port"],
+            user=config["user"],
+            password=config["password"],
+            dbname=config["database"]
+        )
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT hotel_name FROM general_1.hotels
+            WHERE id = %s
+        """, (hotel_id,))
+        result = cur.fetchone()
+        if result:
+            return result[0]
+        return None
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(f"Error al obtener el nombre del hotel: {error}")
+        return None
+    finally:
+        if conn is not None:
+            conn.close()
