@@ -46,7 +46,7 @@ def get_last_unseen_msg(imap_host, username, password):
                 fecha_recibido = msg['Date']  # Obtener la fecha de recepción del mensaje
 
                 # Ajustar la zona horaria
-                tz = pytz.timezone('Europe/Madrid')  # Ajusta a tu zona horaria
+                tz = pytz.timezone('Europe/Madrid')
                 date_tuple = parsedate_tz(fecha_recibido)
                 if date_tuple:
                     local_date = datetime.datetime.fromtimestamp(mktime_tz(date_tuple), tz)
@@ -272,12 +272,12 @@ def respond_and_save_emails():
 
         # Leer emails sin respuesta generada
         cur.execute("""
-            SELECT id, email_body, hotel_id FROM general_1.emails
+            SELECT id, email_body, hotel_id, received_date FROM general_1.emails
             WHERE generated_response IS NULL
         """)
         emails = cur.fetchall()
 
-        for email_id, email_body, hotel_id in emails:
+        for email_id, email_body, hotel_id, received_date in emails:
             # Buscar información del hotel
             cur.execute("""
                 SELECT context, model FROM general_1.agent_attributes
@@ -290,15 +290,17 @@ def respond_and_save_emails():
                 # Generar respuesta con el modelo GPT
                 generated_response = gpt_model(context, email_body, model)
 
-                # Obtener el timestamp actual
-                current_time = datetime.datetime.now()
+                # Obtener el timestamp actual y convertirlo a la zona horaria local
+                current_time = datetime.datetime.now(pytz.utc)
+                local_tz = pytz.timezone('Europe/Madrid')
+                local_time = current_time.astimezone(local_tz)
 
                 # Guardar la respuesta generada y el timestamp en la base de datos
                 cur.execute("""
                     UPDATE general_1.emails
                     SET generated_response = %s, answered_date = %s
                     WHERE id = %s
-                """, (generated_response, current_time, email_id))
+                """, (generated_response, local_time, email_id))
                 conn.commit()
 
         cur.close()

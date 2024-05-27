@@ -50,13 +50,16 @@ def format_date(date):
         return "Fecha no disponible"
     else:
         return pd.to_datetime(date).strftime('%d-%m-%Y %H:%M')
+    
+def load_data(code):
+    # Aquí iría tu lógica para cargar los datos basados en el código
+    st.success("Los datos han sido actualizados" )
 
 st.set_page_config(
     page_title="Milton",
     page_icon="🤵",
-    layout="wide" )
+    layout="wide")
 
-# CSS
 st.markdown(
     """
     <style>
@@ -66,45 +69,46 @@ st.markdown(
         background-color: #FDFDFD;
         padding: 20px;
         border-radius: 20px;
+        color: black; 
     }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <style>
     .generated_response {
         height: 300px;
         overflow-y: auto;
         background-color: #F9FAF9;
         padding: 20px;
         border-radius: 20px;
+        color: black; 
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-st.sidebar.markdown("<h1 style='text-align: left; color: #172427; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
-st.sidebar.text("")
+st.markdown("<h1 style='text-align: left; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
     
 # Página de acceso para el código
-code_input = st.sidebar.text_input("Código de acceso", '')
+if 'access_code' not in st.session_state:
+    st.session_state.access_code = ''
+
+code_input = st.text_input("Introduce tu código de acceso:", value=st.session_state.access_code)
 
 # Verificar el código y mostrar la información correspondiente
 if code_input:
+    st.session_state.access_code = code_input
     if code_input in code_to_hotel:
         hotel_id = code_to_hotel[code_input]
         hotel_name = f.get_hotel_name(db_config, hotel_id)
         st.title(hotel_name)
-        st.divider()
         df = query_database(db_config, email_query, hotel_id)
-
         if not df.empty:
             total_emails = len(df)
-            st.sidebar.markdown(f"**Número de emails recibidos: {total_emails}**") 
+            st.markdown(f"**Número de emails recibidos: {total_emails}**") 
+            if st.button("Actualizar datos"):
+                if st.session_state.access_code:
+                    load_data(st.session_state.access_code)
+                else:
+                    st.error("Por favor, introduce un código de acceso válido.")
+            st.divider()
             for index, row in df.iterrows():
                 email_number = total_emails - index
                 col1, col2 = st.columns(2)
@@ -113,7 +117,7 @@ if code_input:
                     st.markdown(f"**🦰 Email {email_number} ({received_date})**")
                     email_body = row["email_body"]
                     st.markdown(f'<div class="email_body">{email_body}</div>', unsafe_allow_html=True)
-        
+                    st.text("")
                 with col2:
                     answered_date = format_date(row["answered_date"])
                     st.markdown(f"**🤵🏻‍♂️ Respuesta {email_number} ({answered_date})**")
