@@ -59,10 +59,8 @@ def load_data(code):
     # Aquí iría tu lógica para cargar los datos basados en el código
     st.success("Los datos han sido actualizados" )
 
-st.set_page_config(
-    page_title="Milton",
-    page_icon="🤵",
-    layout="wide")
+st.set_page_config(page_title="Milton", page_icon="🤵", layout="wide", initial_sidebar_state="collapsed" )
+st.logo(image='milton_logo.png')
 
 st.markdown(
     """
@@ -89,7 +87,6 @@ st.markdown(
 )
 
 st.markdown("<h1 style='text-align: left; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
-st.logo(image='milton_logo.png')
     
 # Página de acceso para el código
 if 'access_code' not in st.session_state:
