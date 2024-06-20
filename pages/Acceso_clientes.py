@@ -53,7 +53,7 @@ def format_date(date):
     if pd.isna(date):
         return "Fecha no disponible"
     else:
-        return pd.to_datetime(date).strftime('%d-%m-%Y %H:%M')
+        return pd.to_datetime(date).strftime('%d-%m-%Y')
     
 def load_data(code):
     # Aquí iría tu lógica para cargar los datos basados en el código

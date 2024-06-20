@@ -18,15 +18,23 @@ from email.utils import parsedate_tz, mktime_tz
 # =============================================================================
 def get_last_unseen_msg(imap_host, username, password):
     def decode_msg(msg):
-        if msg.is_multipart():
-            for part in msg.walk():
-                ctype = part.get_content_type()
-                cdispo = str(part.get('Content-Disposition'))
+        encodings_to_try = ['utf-8', 'iso-8859-1', 'windows-1252']  # Lista de codificaciones a intentar
 
-                if ctype == 'text/plain' and 'attachment' not in cdispo:
-                    return part.get_payload(decode=True).decode('utf-8')
-        else:
-            return msg.get_payload(decode=True).decode('utf-8')
+        for encoding in encodings_to_try:
+            try:
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        ctype = part.get_content_type()
+                        cdispo = str(part.get('Content-Disposition'))
+
+                        if ctype == 'text/plain' and 'attachment' not in cdispo:
+                            return part.get_payload(decode=True).decode(encoding)
+                else:
+                    return msg.get_payload(decode=True).decode(encoding)
+            except UnicodeDecodeError:
+                continue
+
+        return None
 
     try:
         mail = imaplib.IMAP4_SSL(imap_host)
