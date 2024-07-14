@@ -6,11 +6,10 @@ st.logo(image='milton_logo.png', link='https://milton.gluon.es/')
 st.title("Milton")
 st.write("")
 
-col1, col2 = st.columns(2)
-with col1:
-    st.page_link("pages/Registro.py", label="Regístrate", icon="✍️")
-with col2:
-    st.page_link("pages/Acceso_clientes.py", label="Acceso clientes", icon="👤")
+video_file = open('milton1080hd.mp4', 'rb')
+video_bytes = video_file.read()
+st.video(video_bytes)
 
 st.divider()
-st.write("Aquí puedes encontrar información sobre cómo usar esta aplicación.")
+
+st.page_link("pages/Acceso_clientes.py", label="Acceso clientes", icon="👤")

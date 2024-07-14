@@ -13,7 +13,8 @@ code_to_hotel = {
     '1011': '11',
     '1012': '12',
     '2013': '13',
-    '3014': '14'
+    '3014': '14',
+    '4015':'15'
 }
 
 # Consulta SQL para obtener emails y respuestas generadas
