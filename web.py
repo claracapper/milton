@@ -9,7 +9,8 @@ warnings.filterwarnings('ignore')
 
 # Mapeo de códigos a hotelID
 code_to_hotel = {
-    '1': '1',
+    '1': '2',
+    '111': '1',
     '1011': '11',
     '1012': '12',
     '2013': '13',

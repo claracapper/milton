@@ -87,6 +87,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.image("milton.svg", width=100)
 st.markdown("<h1 style='text-align: left; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
     
 # Página de acceso para el código
