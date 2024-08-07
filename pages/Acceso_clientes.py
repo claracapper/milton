@@ -60,8 +60,8 @@ def load_data(code):
     # Aquí iría tu lógica para cargar los datos basados en el código
     st.success("Los datos han sido actualizados" )
 
-st.set_page_config(page_title="Milton", page_icon="🤵", layout="wide", initial_sidebar_state="collapsed" )
-st.logo(image='milton_logo.png')
+st.set_page_config(page_title="Milton", page_icon="🛎️", layout="wide", initial_sidebar_state="collapsed" )
+st.logo(image='milton_logo.png', link='https://milton.gluon.es/')
 
 st.markdown(
     """
@@ -87,8 +87,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.image("milton.svg", width=100)
-st.markdown("<h1 style='text-align: left; font-size: 40px;'>Milton</h1>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
+with col2:
+    st.image("milton.svg", width=100)
+with col3:
+    st.page_link("pages/Pruébalo.py", label="¡Pruébalo!", icon="✨")
+
     
 # Página de acceso para el código
 if 'access_code' not in st.session_state:
@@ -132,3 +136,6 @@ if code_input:
             st.warning("No hay correos electrónicos para el hotel especificado.")
     else:
         st.error("Código de acceso inválido. Por favor, intente de nuevo.")
+
+st.divider()
+st.page_link("Milton.py", label="Volver a la página principal", icon="🛎️")

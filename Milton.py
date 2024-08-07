@@ -4,19 +4,17 @@ from demo_emails import run_demo_emails
 st.set_page_config(page_title="Milton", page_icon="🛎️", layout="wide", initial_sidebar_state="collapsed" )
 st.logo(image='milton_logo.png', link='https://milton.gluon.es/')
 
-st.image("milton.svg", width=100)
+col1, col2, col3 = st.columns(3)
+with col2:
+    st.image("milton.svg", width=100)
+with col1:
+    st.page_link("pages/Pruébalo.py", label="¡Pruébalo!", icon="✨")
+with col3:
+    st.page_link("pages/Acceso_clientes.py", label="Acceso clientes", icon="👤")
 
 st.markdown(f'<h1 style="color: #FF8C00;">Milton</h1>', unsafe_allow_html=True)
 st.caption("Milton es tu recepcionista digital a medida")
-st.write("")
-
-# Botones acceso y demo
-col1, col2, col3 = st.columns([1, 0.5, 1])
-with col1:
-    st.page_link("pages/Pruébalo.py", label="¡Pruébalo!", icon="✨")
-with col2:
-    st.page_link("pages/Acceso_clientes.py", label="Acceso clientes", icon="👤")
-st.divider()
+st.markdown('<div style="height: 60px;"></div>', unsafe_allow_html=True)
 
 # Texto intro
 col1, col2, col3 = st.columns([3, 0.7, 3])
